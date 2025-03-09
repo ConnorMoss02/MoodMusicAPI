@@ -1,17 +1,11 @@
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+// Add Swagger and API Explorer
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddControllers(); // Registers controller-based APIs. (READ MORE INTO THIS LATER)
 
 var app = builder.Build();
-app.UseRouting();
 
-app.MapControllers(); // Tells ASP.NET to route API calls to controller classes (READ MORE INTO THIS LATER)
-
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -20,14 +14,19 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
+app.MapPost("/api/mood/analyze", (MoodRequest request) =>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+    return Results.Ok(new { mood = "happy", message = $"Detected mood from text: {request.Text}" });
+})
+    .WithName("AnalyzeMood")
+    .WithTags("Mood Analysis")
+    .Produces(200, typeof(object))
+    .Accepts<MoodRequest>("application/json");
 
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+
+public class MoodRequest
 {
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    public string? Text { get; set; }
 }
