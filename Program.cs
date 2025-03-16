@@ -1,11 +1,22 @@
+using MoodMusicAPI.Services;
+using MoodMusicAPI.Models;
+using MoodMusicAPI.Endpoints;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add Swagger and API Explorer
+// Add services to the container
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Configure Spotify and application services
+builder.Services.Configure<SpotifySettings>(builder.Configuration.GetSection("Spotify"));
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<ISpotifyService, SpotifyService>();
+builder.Services.AddScoped<IMoodAnalyzer, MoodAnalyzer>();
+
 var app = builder.Build();
 
+// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -14,19 +25,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapPost("/api/mood/analyze", (MoodRequest request) =>
-{
-    return Results.Ok(new { mood = "happy", message = $"Detected mood from text: {request.Text}" });
-})
-    .WithName("AnalyzeMood")
-    .WithTags("Mood Analysis")
-    .Produces(200, typeof(object))
-    .Accepts<MoodRequest>("application/json");
+// Map endpoints
+app.MapMoodEndpoints();
 
 app.Run();
 
 
-public class MoodRequest
-{
-    public string? Text { get; set; }
-}
