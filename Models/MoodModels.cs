@@ -29,4 +29,14 @@ public class MusicRecommendation
     public string SpotifyUri { get; set; }
     public SpotifyMusicAttributes Attributes { get; set; }
     public string RecommendationReason { get; set; }
+    
+    // Additional track information
+    public string AlbumName { get; set; }
+    public string AlbumImageUrl { get; set; }
+    public int DurationMs { get; set; }
+    public bool Explicit { get; set; }
+    public int Popularity { get; set; }
+    public string PreviewUrl { get; set; }
+    public string SpotifyUrl { get; set; }
+    public string ReleaseDate { get; set; }
 }
