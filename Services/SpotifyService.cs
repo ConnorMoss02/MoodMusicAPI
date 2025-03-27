@@ -24,16 +24,30 @@ public class SpotifyService : ISpotifyService
 
         var spotifyAttributes = moodAnalysis.MusicAttributes;
         var recommendations = new List<MusicRecommendation>();
+        
+        var requestUrl = $"https://api.spotify.com/v1/recommendations" +
+                         $"?seed_genres={spotifyAttributes.PreferredGenres}&" +
+                         $"target_valence={spotifyAttributes.Valence}&" +
+                         $"target_energy={spotifyAttributes.Energy}&" +
+                         $"target_tempo={spotifyAttributes.Tempo}";
+        
+        Console.WriteLine($"Final Spotify Request URL: {requestUrl}");
 
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
-
-        var requestUrl = $"https://api.spotify.com/v1/recommendations?" +
-            $"target_valence={spotifyAttributes.Valence}&" +
-            $"target_energy={spotifyAttributes.Energy}&" +
-            $"target_tempo={spotifyAttributes.Tempo}&" +
-            $"seed_genres={spotifyAttributes.PreferredGenres}";
+        Console.WriteLine($"Authorization header: {_httpClient.DefaultRequestHeaders.Authorization}");
+        
+        Console.WriteLine("Requesting recommendations from Spotify...");
+        Console.WriteLine($"URL: {requestUrl}");
+        Console.WriteLine($"Token: {_accessToken}");
 
         var response = await _httpClient.GetAsync(requestUrl);
+        
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Spotify API error: {response.StatusCode} - {error}");
+            // return new List<SpotifyTrack>();
+        }
 
         if (response.IsSuccessStatusCode)
         {
@@ -58,6 +72,9 @@ public class SpotifyService : ISpotifyService
     {
         if (!string.IsNullOrEmpty(_accessToken))
             return;
+        
+        Console.WriteLine("Getting new access token from Spotify...");
+        Console.WriteLine("Client ID: " + _settings.ClientId);
 
         var auth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_settings.ClientId}:{_settings.ClientSecret}"));
 
@@ -70,9 +87,26 @@ public class SpotifyService : ISpotifyService
         };
 
         tokenRequest.Headers.Authorization = new AuthenticationHeaderValue("Basic", auth);
-
+        
         var tokenResponse = await _httpClient.SendAsync(tokenRequest);
+        
+        if (!tokenResponse.IsSuccessStatusCode)
+        {
+            var errorBody = await tokenResponse.Content.ReadAsStringAsync();
+            Console.WriteLine("Token request failed: " + errorBody);
+            return;
+        }
+        
         var tokenResult = await tokenResponse.Content.ReadFromJsonAsync<SpotifyTokenResponse>();
-        _accessToken = tokenResult?.AccessToken;
+
+        if (tokenResult == null || string.IsNullOrEmpty(tokenResult.AccessToken))
+        {
+            var raw = await tokenResponse.Content.ReadAsStringAsync();
+            Console.WriteLine("Failed to get token from Spotify: " + raw);
+        }
+        
+        _accessToken = tokenResult.AccessToken;
+        Console.WriteLine("Got the token from Spotify: " + _accessToken);
+    
     }
 }

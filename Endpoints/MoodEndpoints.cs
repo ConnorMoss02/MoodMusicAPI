@@ -29,7 +29,7 @@ public static class MoodEndpoints
             return Results.Ok(new
             {
                 mood = moodAnalysis,
-                recommendations = recommendations,
+                recommendations,
                 message = $"Found music recommendations based on your mood: {moodAnalysis.PrimaryMood}"
             });
         })
