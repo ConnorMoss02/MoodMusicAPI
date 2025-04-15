@@ -18,20 +18,14 @@ public class SpotifyService : ISpotifyService
         _settings = settings.Value;
     }
 
-    public async Task<List<MusicRecommendation>> GetRecommendationsAsync(MoodAnalysisResult moodAnalysis)
+    public async Task<List<MusicRecommendation>> GetItemAsync(MoodAnalysisResult moodAnalysis)
     {
         await EnsureAccessTokenAsync();
-
-        var spotifyAttributes = moodAnalysis.MusicAttributes;
+        
         var recommendations = new List<MusicRecommendation>();
-        
-        var requestUrl = $"https://api.spotify.com/v1/recommendations" +
-                         $"?seed_genres={spotifyAttributes.PreferredGenres}&" +
-                         $"target_valence={spotifyAttributes.Valence}&" +
-                         $"target_energy={spotifyAttributes.Energy}&" +
-                         $"target_tempo={spotifyAttributes.Tempo}";
-        
-        Console.WriteLine($"Final Spotify Request URL: {requestUrl}");
+        var query = Uri.EscapeDataString(moodAnalysis.PrimaryMood);
+        const string type = "playlist"; // or "track", "album", etc.
+        var requestUrl = $"https://api.spotify.com/v1/search?q={query}&type={type}&limit=10";
 
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
         Console.WriteLine($"Authorization header: {_httpClient.DefaultRequestHeaders.Authorization}");
@@ -46,23 +40,25 @@ public class SpotifyService : ISpotifyService
         {
             var error = await response.Content.ReadAsStringAsync();
             Console.WriteLine($"Spotify API error: {response.StatusCode} - {error}");
-            // return new List<SpotifyTrack>();
+            return recommendations;
         }
 
         if (response.IsSuccessStatusCode)
         {
-            var result = await response.Content.ReadFromJsonAsync<SpotifyRecommendationsResponse>();
-            if (result?.Tracks != null)
-            {
-                recommendations.AddRange(result.Tracks.Select(track => new MusicRecommendation
-                {
-                    TrackName = track.Name,
-                    ArtistName = track.Artists.FirstOrDefault()?.Name ?? "Unknown Artist",
-                    SpotifyUri = track.Uri,
-                    Attributes = spotifyAttributes,
-                    RecommendationReason = $"This song matches your {moodAnalysis.PrimaryMood.ToLower()} mood with similar energy and tempo"
-                }));
-            }
+            // var result = await response.Content.ReadFromJsonAsync<SpotifyRecommendationsResponse>();
+            var json = await response.Content.ReadAsStringAsync();
+            Console.WriteLine("Raw Spotify JSON: " + json);
+            // if (result?.Tracks != null)
+            // {
+            //     recommendations.AddRange(result.Tracks.Select(track => new MusicRecommendation
+            //     {
+            //         TrackName = track.Name,
+            //         ArtistName = track.Artists.FirstOrDefault()?.Name ?? "Unknown Artist",
+            //         SpotifyUri = track.Uri,
+            //         Attributes = moodAnalysis.MusicAttributes,
+            //         RecommendationReason = $"This song matches your {moodAnalysis.PrimaryMood.ToLower()} mood with similar energy and tempo"
+            //     }));
+            // }
         }
 
         return recommendations;

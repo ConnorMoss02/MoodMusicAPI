@@ -4,5 +4,5 @@ namespace MoodMusicAPI.Services;
 
 public interface ISpotifyService
 {
-    Task<List<MusicRecommendation>> GetRecommendationsAsync(MoodAnalysisResult moodAnalysis);
+    Task<List<MusicRecommendation>> GetItemAsync(MoodAnalysisResult moodAnalysis);
 }
