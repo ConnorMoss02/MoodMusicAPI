@@ -21,16 +21,16 @@ public static class MoodEndpoints
         .Produces(200)
         .ProducesValidationProblem();
 
-        app.MapPost("/api/mood/recommend", async (IMoodAnalyzer moodAnalyzer, ISpotifyService spotifyService, MoodRequest request) =>
+        app.MapPost("/api/mood/items", async(IMoodAnalyzer moodAnalyzer, ISpotifyService spotifyService, MoodRequest request) =>
         {
             var moodAnalysis = moodAnalyzer.DetectMood(request.Text);
-            var recommendations = await spotifyService.GetRecommendationsAsync(moodAnalysis);
+            var recommendations = await spotifyService.GetItemAsync(moodAnalysis);
 
             return Results.Ok(new
             {
                 mood = moodAnalysis,
-                recommendations = recommendations,
-                message = $"Found music recommendations based on your mood: {moodAnalysis.PrimaryMood}"
+                recommendations,
+                message = $"Found music items based on your mood: {moodAnalysis.PrimaryMood}"
             });
         })
         .WithName("GetMoodBasedRecommendations")
