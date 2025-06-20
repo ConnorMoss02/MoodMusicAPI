@@ -45,20 +45,21 @@ public class SpotifyService : ISpotifyService
 
         if (response.IsSuccessStatusCode)
         {
-            // var result = await response.Content.ReadFromJsonAsync<SpotifyRecommendationsResponse>();
+            
+            var result = await response.Content.ReadFromJsonAsync<SpotifyRecommendationsResponse>();
             var json = await response.Content.ReadAsStringAsync();
             Console.WriteLine("Raw Spotify JSON: " + json);
-            // if (result?.Tracks != null)
-            // {
-            //     recommendations.AddRange(result.Tracks.Select(track => new MusicRecommendation
-            //     {
-            //         TrackName = track.Name,
-            //         ArtistName = track.Artists.FirstOrDefault()?.Name ?? "Unknown Artist",
-            //         SpotifyUri = track.Uri,
-            //         Attributes = moodAnalysis.MusicAttributes,
-            //         RecommendationReason = $"This song matches your {moodAnalysis.PrimaryMood.ToLower()} mood with similar energy and tempo"
-            //     }));
-            // }
+            if (result?.Tracks != null)
+            {
+                recommendations.AddRange(result.Tracks.Select(track => new MusicRecommendation
+                {
+                    TrackName = track.Name,
+                    ArtistName = track.Artists.FirstOrDefault()?.Name ?? "Unknown Artist",
+                    SpotifyUri = track.Uri,
+                    Attributes = moodAnalysis.MusicAttributes,
+                    RecommendationReason = $"This song matches your {moodAnalysis.PrimaryMood.ToLower()} mood with similar energy and tempo"
+                }));
+            }
             
         }
 
